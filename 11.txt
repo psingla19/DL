@@ -1,0 +1,161 @@
+Aim11: Write a program to generate MNIST Digits using Deep Autoencoders in Keras
+
+
+# Import libraries
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+from IPython import display
+
+display.set_matplotlib_formats('svg')
+
+
+# Import and process the data
+data = np.loadtxt(open("sample_data/mnist_train_small.csv"), delimiter=",")
+labels = data[:, 0]
+data = data[:, 1:]
+
+# Normalize the data to a range of [0, 1]
+dataNorm = data / np.max(data)
+dataT = torch.tensor(dataNorm).float()
+
+
+# Create the DL model
+def createTheMNISTAE():
+    class aenet(nn.Module):
+        def __init__(self):
+            super().__init__()
+            # Input layer
+            self.enc1 = nn.Linear(784, 150)
+            # Encoder layer
+            self.enc2 = nn.Linear(150, 50)
+            # Decoder layer
+            self.dec1 = nn.Linear(50, 150)
+            # Output layer
+            self.dec2 = nn.Linear(150, 784)
+
+        def forward(self, x):
+            x = F.relu(self.enc1(x))
+            codex = F.relu(self.enc2(x))
+            x = F.relu(self.dec1(codex))
+            y = torch.sigmoid(self.dec2(x))
+            return y, codex
+
+    net = aenet()
+    lossfun = nn.MSELoss()
+    optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
+    return net, lossfun, optimizer
+
+# Test the model with a bit of data
+net, lossfun, optimizer = createTheMNISTAE()
+X = dataT[:5, :]
+yHat = net(X)
+print('Input shape:', X.shape)
+print(' ')
+
+# yHat is now a tuple
+print('Type:', type(yHat), 'Length:', len(yHat))
+print('Shape of model output:', yHat[0].shape)
+print('Shape of encoding layer output:', yHat[1].shape)
+
+
+# Training function
+def function2trainTheModel():
+    numepochs = 10000
+    net, lossfun, optimizer = createTheMNISTAE()
+    losses = torch.zeros(numepochs)
+    for epochi in range(numepochs):
+        randomidx = np.random.choice(dataT.shape[0], size=32)
+        X = dataT[randomidx, :]
+
+        yHat = net(X)[0]
+        loss = lossfun(yHat, X)
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+        losses[epochi] = loss.item()
+    return losses, net
+
+
+# Run the model and show the results
+losses, net = function2trainTheModel()
+print(f'Final loss: {losses[-1]:.4f}')
+plt.plot(losses, 's-')
+plt.xlabel('Epochs')
+plt.ylabel('Model loss')
+plt.show()
+
+
+
+# Push through the entire dataset
+yHat, latent = net(dataT)
+print('Output shape:', yHat.shape)
+print('Latent shape:', latent.shape)
+
+fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+ax[0].hist(latent.detach().numpy().flatten(), 100)
+ax[0].set_xlabel('Latent activation value')
+ax[0].set_ylabel('Count')
+ax[0].set_title('Distribution of latent units activations')
+ax[1].imshow(latent.detach().numpy(), aspect='auto', vmin=0, vmax=10)
+ax[1].set_xlabel('Latent node')
+ax[1].set_ylabel('Image number')
+ax[1].set_title('All latent activations')
+plt.show()
+
+# Compute the average latent activation for each digit type
+sourcecode = np.zeros((latent.shape[1], 10))
+for i in range(10):
+    # Find all pictures of this category
+    digidx = np.where(labels == i)[0]
+    # Ensure we get the mean along the correct axis for compatibility
+    sourcecode[:, i] = torch.mean(latent[digidx, :], dim=0).detach().numpy()
+
+# Visualize the model's internal representation
+fig = plt.figure(figsize=(8, 5))
+plt.plot(sourcecode, 's-')
+plt.legend(range(10), loc=(1.01, .4))
+plt.xticks(range(15))
+plt.xlabel('Latent node number')
+plt.ylabel('Activation')
+plt.title("The model's internal representation of the numbers")
+plt.show()
+
+
+
+
+
+# Explore the reduced-compressed space with PCA
+pcaData = PCA(n_components=15).fit(data)
+pcaCode = PCA(n_components=15).fit(latent.detach().numpy())
+
+plt.plot(100 * pcaData.explained_variance_ratio_, 's-', label="Data PCA")
+plt.plot(100 * pcaCode.explained_variance_ratio_, 'o-', label="Code PCA")
+plt.ylabel("Percent variance explained")
+plt.xlabel("PCA component #")
+plt.legend()
+plt.show()
+
+# Compute the projection of the data onto the PC axes
+scoresData = pcaData.transform(data)
+scoresCode = pcaCode.transform(latent.detach().numpy())
+
+fig, ax = plt.subplots(1, 2, figsize=(15, 5))
+ax[0].plot(scoresData[labels == 0, 0], scoresData[labels == 0, 1], 'o', markersize=3, alpha=.4, label='Digit 0')
+ax[0].plot(scoresData[labels == 1, 0], scoresData[labels == 1, 1], 'o', markersize=3, alpha=.4, label='Digit 1')
+ax[0].set_xlabel('PC1 projection')
+ax[0].set_ylabel('PC2 projection')
+ax[0].set_title("PCA of data")
+ax[1].plot(scoresCode[labels == 0, 0], scoresCode[labels == 0, 1], 'o', markersize=3, alpha=.4, label='Digit 0')
+ax[1].plot(scoresCode[labels == 1, 0], scoresCode[labels == 1, 1], 'o', markersize=3, alpha=.4, label='Digit 1')
+ax[1].set_xlabel('PC1 projection')
+ax[1].set_ylabel('PC2 projection')
+ax[1].set_title("PCA of code")
+plt.tight_layout()
+plt.show()
+

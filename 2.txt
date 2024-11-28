@@ -1,0 +1,55 @@
+Aim2:-Develop an ANN model of regression for predicting the values.
+
+
+import numpy as np
+import torch
+import torch.nn as nn
+%config InlineBackend.figure_formats = 'svg'
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+
+N = 30
+x = torch.randn(N,1)
+y = x + torch.randn(N,1)/2
+
+plt.plot(x,y,'s')
+plt.show
+
+
+
+ANNreg = nn.Sequential(
+    nn.Linear(1,1),
+    nn.ReLU(),
+    nn.Linear(1,1)
+)
+
+ANNreg
+
+
+
+predictions = ANNreg(x)
+losses = (predictions - y).pow(2)
+testloss = (predictions - y).pow(2).mean()
+numepochs = N
+
+plt.plot(losses.detach(),'o',markerfacecolor='w',linewidth=.1)
+plt.plot(numepochs,testloss.detach(),'ro')
+plt.xlabel('Epoch')
+plt.ylabel('Loss')
+plt.title('Final Loss = %g' %testloss.item())
+plt.show()
+
+
+
+testloss.item()
+
+
+
+
+plt.plot(x,y,'bo',label = 'Real data')
+plt.plot(x,predictions.detach(),'rs',label='Predications')
+plt.title(f'prediction-data r={np.corrcoef(y.T,predictions.detach().T)[0,1]:.2f}')
+plt.legend()
+plt.show()
+

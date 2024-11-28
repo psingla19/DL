@@ -1,0 +1,139 @@
+Aim4:- Study the single layer neural network for different Learning rates.
+
+import torch
+import torch.nn as nn
+import numpy as np
+%config InlineBackend.figure_formats = 'svg'
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+
+nPerClust = 100
+blur = 1
+
+A = [ 1, 1]
+B = [ 5, 1]
+
+a = [ A[0]+np.random.randn(nPerClust)*blur, A[1]+np.random.randn(nPerClust)*blur ]
+b = [ B[0]+np.random.randn(nPerClust)*blur, B[1]+np.random.randn(nPerClust)*blur ]
+
+labels_np = np.vstack((np.zeros((nPerClust,1)), np.ones((nPerClust,1))))
+
+data_np = np.hstack((a,b)).T
+
+data = torch.tensor(data_np).float()
+labels = torch.tensor(labels_np).float()
+
+fig = plt.figure(figsize=(5,5))
+plt.plot(data[np.where(labels==0)[0],0], data[np.where(labels==0)[0],1], 'bs')
+plt.plot(data[np.where(labels==1)[0],0], data[np.where(labels==1)[0],1], 'ko')
+plt.title('Blue squares are class 0, black dots are class 1')
+plt.xlabel('Dimension 1')
+plt.ylabel('Dimension 2')
+plt.show()
+
+
+def createANNmodel(learningRate):
+
+    ANNclassify = nn.Sequential(
+        nn.Linear(2, 1),
+        nn.ReLU(),
+        nn.Linear(1, 1),
+        )
+
+    ANNclassify
+
+    lossfun = nn.BCEWithLogitsLoss()
+
+    optimizer = torch.optim.SGD(ANNclassify.parameters(), lr=learningRate)
+
+    return ANNclassify, lossfun, optimizer
+
+
+numepochs = 1000
+
+def trainTheModel(ANNmodel):
+
+    losses = torch.zeros(numepochs)
+
+    for epochi in range(numepochs):
+        yHat = ANNmodel(data)
+
+        loss = lossfun(yHat, labels)
+        losses[epochi] = loss
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+    predictions = ANNmodel(data)
+
+    totalacc = 100*torch.mean(((predictions>0) == labels).float())
+
+    return losses, predictions, totalacc
+
+
+ANNclassify, lossfun, optimizer = createANNmodel(0.01)
+
+losses, predictions, totalacc = trainTheModel(ANNclassify)
+
+print('Final accuracy: %g%%' %totalacc)
+
+plt.plot(losses.detach(),'o',markerfacecolor='w',linewidth=.1)
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.title('Training loss')
+plt.show()
+
+
+learningrates = np.linspace(0.001, 0.1, 100)
+
+accByLR = []
+allLosses = np.zeros((len(learningrates), numepochs))
+
+for i,lr in enumerate(learningrates):
+
+    ANNclassify, lossfun, optimizer = createANNmodel(lr)
+    losses, predictions, totalacc = trainTheModel(ANNclassify)
+
+    accByLR.append(totalacc)
+    allLosses[i,:] = losses.detach()
+
+
+fig, ax = plt.subplots(1,2,figsize=(12,4))
+
+ax[0].plot(learningrates, accByLR, 's-')
+ax[0].set_xlabel('Learning rate')
+ax[0].set_ylabel('Accuracy (%)')
+ax[0].set_title('Accuracy by learning rate')
+
+ax[1].plot(allLosses.T)
+ax[1].set_xlabel('Epochs')
+ax[1].set_ylabel('Loss')
+ax[1].set_title('Loss by learning rate')
+plt.show()
+
+
+
+numExps = 100
+
+accMeta = np.zeros((numExps,len(learningrates)))
+
+numepochs = 1000
+
+for expi in range(numExps):
+    for i,lr in enumerate(learningrates):
+
+        ANNclassify, lossfun, optimizer = createANNmodel(lr)
+        losses, predictions, totalacc = trainTheModel(ANNclassify)
+
+        accMeta[expi,i] = totalacc
+
+plt.plot(learningrates, np.mean(accMeta, axis=0), 's-')
+plt.xlabel('Learning rate')
+plt.ylabel('Accuracy (%)')
+plt.title('Accuracy by learning rate')
+plt.show()
+
+
+

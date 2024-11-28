@@ -1,0 +1,23 @@
+Aim1:- Use the function 3x^2 - 3x + 4 to get its minimum value using gradient descent algorithm . Plot the necessary graphs and compare the minimum value with theoretical minimum .
+
+Aim2:-Develop an ANN model of regression for predicting the values.
+
+Aim3:- Create a single layer neural network to classify the self-generated random data.
+
+Aim4:- Study the single layer neural network for different Learning rates.
+
+Aim5 :- Create a deep Multi-layer Neural network to classify self-generated random data
+
+Aim6:- Use the iris database to classify the different type of irises. Iris s=dataset is inbuilt in Seaborn package.
+
+Aim7:- Use wine.csv dataset to realize the PCA technique
+
+Aim8 :- Use the appropriate dataset to realize multiple linear regression and show how various statistical tools like p-value, t-score, etc can be used for dimensionality reduction.
+
+Aim9: Analyze the use of train_test_split class of Scikit-learn library and study the effects of different ratios of Training Data and Test data on the accuracy of a model.
+
+Aim10:To explore the implementation, structure, and functionality of LSTM and GRU models in PyTorch, and analyze their performance in processing sequential data.
+
+Aim11 :  Write a program to generate MNIST Digits using Deep Autoencoders in Keras
+
+Aim12: Write a program to generate MNIST Digits using GANs

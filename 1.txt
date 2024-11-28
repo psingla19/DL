@@ -1,0 +1,83 @@
+Aim1:- Use the function 3x^2 - 3x + 4 to get its minimum value using gradient descent algorithm . Plot the necessary graphs and compare the minimum value with theoretical minimum .
+
+
+import numpy as np
+%config InlineBackend.figure_format = 'svg'
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+
+
+def fx(x):
+    return 3*x**2 - 3*x + 4
+
+def deriv(x):
+    return 6*x - 3
+
+
+x = np.linspace(-2,2,2001)
+plt.plot(x,fx(x),x,deriv(x))
+plt.xlim(x[[0,-1]])
+plt.grid()
+plt.xlabel('x')
+plt.ylabel('y')
+plt.legend(['f(x)','f\'(x)'])
+plt.show()
+
+
+
+localmin = np.random.choice(x,1)
+print('localmin =',localmin)
+learning_rate = 0.01
+training_epochs = 100
+
+for i in range(training_epochs):
+    grad = deriv(localmin)
+    localmin = localmin - learning_rate * grad
+
+print('localmin =',localmin)
+
+
+
+plt.plot(x,fx(x),x,deriv(x))
+plt.plot(localmin,deriv(localmin),'ro')
+plt.plot(localmin,fx(localmin),'ro')
+plt.xlim(x[[0,-1]])
+plt.grid()
+plt.xlabel('x')
+plt.ylabel('y')
+plt.legend(['f(x)','f\'(x)', 'f(x) min'])
+plt.show()
+
+
+
+
+localmin = np.random.choice(x,1)
+
+learning_rate = 0.01
+training_epochs = 100
+
+modelparams = np.zeros((training_epochs,2))
+for i in range(training_epochs):
+    grad = deriv(localmin)
+    localmin = localmin - learning_rate * grad
+    modelparams[i,0] = localmin
+    modelparams[i,1] = grad
+
+
+
+fig,ax = plt.subplots(1,2,figsize=(12,4))
+
+for i in range(2):
+    ax[i].plot(modelparams[:,i],'o-')
+    ax[i].set_xlabel('Epochs')
+    ax[i].set_title(f'final estimated minimum: {localmin[0]:.5f}')
+
+ax[0].set_ylabel('localmin')
+ax[1].set_ylabel('derivative')
+
+plt.show()
+
+
+
+

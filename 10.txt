@@ -1,0 +1,130 @@
+Aim10:To explore the implementation, structure, and functionality of LSTM and GRU models in PyTorch, and analyze their performance in processing sequential data.
+
+
+import torch
+import torch.nn as nn
+import numpy as np
+
+
+# Explore the LSTM type
+# Set layer parameters
+input_size = 9    # Number of features to extract (e.g., number of data channels)
+hidden_size = 16  # Number of units in the hidden state
+num_layers = 2    # Number of vertical stacks of hidden layers
+
+
+# Create an LSTM instance
+lstm = nn.LSTM(input_size, hidden_size, num_layers)
+lstm
+
+
+nn.LSTM
+
+
+# Set data parameters
+seqlength = 5
+batchsize = 2
+
+
+# Create some data
+X = torch.rand(seqlength, batchsize, input_size)
+
+
+# Create initial hidden states (typically initialized as zeros)
+H = torch.zeros(num_layers, batchsize, hidden_size)
+C = torch.zeros(num_layers, batchsize, hidden_size)
+
+
+# The input is a tuple of (hidden, cell)
+hiddeninputs = (H, C)
+
+
+# Run data through the model and show the output sizes
+y, h = lstm(X, hiddeninputs)
+print(f'Input shape:  {list(X.shape)}')
+print(f'Hidden shape: {list(h[0].shape)}')
+print(f'Cell shape:   {list(h[1].shape)}')
+print(f'Output shape: {list(y.shape)}')
+
+
+# Check out the learned parameters and their sizes
+for p in lstm.named_parameters():
+    if 'weight' in p[0]:
+        print(f'{p[0]} has size {list(p[1].shape)}')
+
+
+# Create a custom LSTM model class
+class LSTMnet(nn.Module):
+    def __init__(self, input_size, num_hidden, num_layers):
+        super().__init__()
+        # Store parameters
+        self.input_size = input_size
+        self.num_hidden = num_hidden
+        self.num_layers = num_layers
+        # RNN Layer (notation: LSTM ∈ RNN)
+        self.lstm = nn.LSTM(input_size, num_hidden, num_layers)
+        # Linear layer for output
+        self.out = nn.Linear(num_hidden, 1)
+
+    def forward(self, x):
+        print(f'Input: {list(x.shape)}')
+        # Run through the RNN layer
+        y, hidden = self.lstm(x)
+        print(f'RNN-out: {list(y.shape)}')
+        print(f'RNN-hidden: {list(hidden[0].shape)}')
+        print(f'RNN-cell: {list(hidden[1].shape)}')
+        # Pass the RNN output through the linear output layer
+        o = self.out(y)
+        print(f'Output: {list(o.shape)}')
+        return o, hidden
+
+
+
+# Create an instance of the model and inspect
+net = LSTMnet(input_size, hidden_size, num_layers)
+print(net), print(' ')
+
+
+# Check out all learnable parameters
+for p in net.named_parameters():
+    print(f'{p[0]:>20} has size {list(p[1].shape)}')
+
+
+# Test the model with some data
+# Create some data
+X = torch.rand(seqlength, batchsize, input_size)
+y = torch.rand(seqlength, batchsize, 1)
+yHat, h = net(X)
+
+
+# Loss function
+lossfun = nn.MSELoss()
+loss = lossfun(yHat, y)
+print(loss)
+
+
+# GRU example
+# Create a GRU instance
+gru = nn.GRU(input_size, hidden_size, num_layers)
+gru
+
+
+nn.GRU
+
+
+# Create data and a hidden state
+X = torch.rand(seqlength, batchsize, input_size)
+H = torch.zeros(num_layers, batchsize, hidden_size)
+
+
+# Run data through the model and show the output sizes
+y, h = gru(X, H)
+print(f'Input shape: {list(X.shape)}')
+print(f'Hidden shape: {list(h.shape)}')
+print(f'Output shape: {list(y.shape)}')
+
+
+
+# Check out the learned parameters and their sizes
+for p in gru.named_parameters():
+    print(f'{p[0]:>15} has size {list(p[1].shape)}')
